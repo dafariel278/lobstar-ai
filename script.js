@@ -5,19 +5,17 @@ async function sendMessage() {
   const message = input.value.trim();
   if (!message) return;
 
-  const userMsg = document.createElement("div");
-  userMsg.className = "message user";
-  userMsg.textContent = message;
-  chatBox.appendChild(userMsg);
+  const userDiv = document.createElement("div");
+  userDiv.className = "message user";
+  userDiv.textContent = message;
+  chatBox.appendChild(userDiv);
 
   input.value = "";
 
-  const aiMsg = document.createElement("div");
-  aiMsg.className = "message ai";
-  aiMsg.textContent = "Thinking...";
-  chatBox.appendChild(aiMsg);
-
-  chatBox.scrollTop = chatBox.scrollHeight;
+  const aiDiv = document.createElement("div");
+  aiDiv.className = "message ai";
+  aiDiv.textContent = "Thinking...";
+  chatBox.appendChild(aiDiv);
 
   try {
     const response = await fetch("/api/chat", {
@@ -27,10 +25,10 @@ async function sendMessage() {
     });
 
     const data = await response.json();
-    aiMsg.textContent = data.reply;
+    aiDiv.textContent = data.reply;
 
   } catch {
-    aiMsg.textContent = "Connection error.";
+    aiDiv.textContent = "Connection error.";
   }
 
   chatBox.scrollTop = chatBox.scrollHeight;
