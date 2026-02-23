@@ -4,32 +4,41 @@ export default async function handler(req, res) {
   }
 
   try {
+    // Cek API key
     if (!process.env.OPENROUTER_API_KEY) {
       return res.status(500).json({ reply: "API key not found." });
     }
 
     const { message } = req.body;
 
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        model: "mistralai/mistral-7b-instruct:free",
-        messages: [
-          {
-            role: "system",
-            content: "You are Lobstar AI. Respond in English. Witty, aristocratic, confident."
-          },
-          {
-            role: "user",
-            content: message
-          }
-        ]
-      })
-    });
+    if (!message) {
+      return res.status(400).json({ reply: "No message provided." });
+    }
+
+    const response = await fetch(
+      "https://openrouter.ai/api/v1/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          model: "openchat/openchat-3.5-0106",
+          messages: [
+            {
+              role: "system",
+              content:
+                "You are Lobstar AI. Respond in English only. Be witty, aristocratic, confident, and sharp. No emojis."
+            },
+            {
+              role: "user",
+              content: message
+            }
+          ]
+        })
+      }
+    );
 
     const text = await response.text();
 
