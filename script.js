@@ -1,3 +1,16 @@
+// Load WebLLM
+const script = document.createElement("script");
+script.src = "https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm/dist/index.js";
+document.head.appendChild(script);
+
+let engine;
+
+script.onload = async () => {
+  engine = new webllm.MLCEngine();
+  await engine.reload("Llama-3-8B-Instruct-q4f32_1");
+  console.log("Model Loaded");
+};
+
 async function sendMessage() {
   const input = document.getElementById("user-input");
   const chatBox = document.getElementById("chat-box");
@@ -13,7 +26,7 @@ async function sendMessage() {
 
   input.value = "";
 
-  // Add temporary thinking message
+  // Add thinking message
   const thinkingMessage = document.createElement("div");
   thinkingMessage.className = "message ai";
   thinkingMessage.textContent = "Thinking...";
@@ -21,30 +34,31 @@ async function sendMessage() {
 
   chatBox.scrollTop = chatBox.scrollHeight;
 
-  try {
-  const response = await fetch("/api/chat", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({ message })
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    thinkingMessage.textContent = "Server error: " + errorText;
+  if (!engine) {
+    thinkingMessage.textContent = "Model still loading. Please wait...";
     return;
   }
 
-  const data = await response.json();
+  try {
+    const reply = await engine.chat.completions.create({
+      messages: [
+        {
+          role: "system",
+          content:
+            "You are Lobstar AI. Respond in English only. Be witty, aristocratic, confident, and sharp. No emojis."
+        },
+        {
+          role: "user",
+          content: message
+        }
+      ]
+    });
 
-  console.log("API Response:", data);
-
-  thinkingMessage.textContent = data.reply || "No response.";
+    thinkingMessage.textContent =
+      reply.choices[0].message.content;
 
   } catch (error) {
-    console.error(error);
-    thinkingMessage.textContent = "Connection error.";
+    thinkingMessage.textContent = "Error generating response.";
   }
 
   chatBox.scrollTop = chatBox.scrollHeight;
