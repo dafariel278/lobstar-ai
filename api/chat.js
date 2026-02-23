@@ -6,13 +6,13 @@ export default async function handler(req, res) {
   }
 
   try {
-    const openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-    });
-
     if (!process.env.OPENAI_API_KEY) {
       return res.status(500).json({ reply: "API key not found." });
     }
+
+    const openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    });
 
     const { message } = req.body;
 
@@ -48,6 +48,10 @@ Answer clearly and sharply.
 
   } catch (error) {
     console.error("API ERROR:", error);
-    return res.status(500).json({ reply: "Server error." });
+
+    return res.status(500).json({
+      reply: error.message || "Unknown error",
+      fullError: JSON.stringify(error)
+    });
   }
 }
