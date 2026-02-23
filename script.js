@@ -1,38 +1,31 @@
-function sendMessage() {
-  const input = document.getElementById("user-input");
-  const chatBox = document.getElementById("chat-box");
-  const userText = input.value.trim();
+async function sendMessage() {
+  const input = document.getElementById("input");
+  const output = document.getElementById("output");
 
-  if (userText === "") return;
+  const message = input.value.trim();
+  if (!message) return;
 
-  // Add user message
-  const userMessage = document.createElement("div");
-  userMessage.className = "message user";
-  userMessage.textContent = userText;
-  chatBox.appendChild(userMessage);
+  output.innerHTML = "Thinking...";
 
-  // Generate AI response
-  const aiMessage = document.createElement("div");
-  aiMessage.className = "message ai";
-  aiMessage.textContent = generateLobstarResponse(userText);
-  chatBox.appendChild(aiMessage);
+  try {
+    const response = await fetch("/api/chat", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ message })
+    });
 
-  input.value = "";
-  chatBox.scrollTop = chatBox.scrollHeight;
-}
+    const data = await response.json();
 
-function generateLobstarResponse(input) {
-  const responses = [
-    "How quaint.",
-    "You ask boldly for someone so unprepared.",
-    "Ambition suits you. Intelligence might follow.",
-    "Ah. A predictable curiosity.",
-    "Interesting. Continue — I am mildly entertained.",
-    "Power is not given. It is taken.",
-    "You seek answers. I offer perspective.",
-    "Luxury is a mindset, not a wallet.",
-    "Ask better questions."
-  ];
+    if (data.reply) {
+      output.innerHTML = data.reply;
+    } else {
+      output.innerHTML = "No response from server.";
+    }
 
-  return responses[Math.floor(Math.random() * responses.length)];
+  } catch (error) {
+    console.error(error);
+    output.innerHTML = "Connection error.";
+  }
 }
