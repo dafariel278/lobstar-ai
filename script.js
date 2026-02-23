@@ -1,14 +1,24 @@
-// Load WebLLM
-const script = document.createElement("script");
-script.src = "https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm/dist/index.js";
-document.head.appendChild(script);
+// Load WebLLM script
+const webllmScript = document.createElement("script");
+webllmScript.src = "https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm/dist/index.js";
+document.head.appendChild(webllmScript);
 
 let engine;
+let modelReady = false;
 
-script.onload = async () => {
-  engine = new webllm.MLCEngine();
-  await engine.reload("Llama-3-8B-Instruct-q4f32_1");
-  console.log("Model Loaded");
+// Initialize model
+webllmScript.onload = async () => {
+  try {
+    engine = new webllm.MLCEngine();
+
+    // 🔥 Model ringan & lebih cepat
+    await engine.reload("TinyLlama-1.1B-Chat-v1.0-q4f16_1");
+
+    modelReady = true;
+    console.log("TinyLlama model loaded successfully.");
+  } catch (err) {
+    console.error("Model load error:", err);
+  }
 };
 
 async function sendMessage() {
@@ -26,18 +36,17 @@ async function sendMessage() {
 
   input.value = "";
 
-  // Add thinking message
-  const thinkingMessage = document.createElement("div");
-  thinkingMessage.className = "message ai";
-  thinkingMessage.textContent = "Thinking...";
-  chatBox.appendChild(thinkingMessage);
+  // Add AI placeholder
+  const aiMessage = document.createElement("div");
+  aiMessage.className = "message ai";
+  aiMessage.textContent = modelReady
+    ? "Thinking..."
+    : "Model loading... please wait.";
+  chatBox.appendChild(aiMessage);
 
   chatBox.scrollTop = chatBox.scrollHeight;
 
-  if (!engine) {
-    thinkingMessage.textContent = "Model still loading. Please wait...";
-    return;
-  }
+  if (!modelReady) return;
 
   try {
     const reply = await engine.chat.completions.create({
@@ -51,14 +60,14 @@ async function sendMessage() {
           role: "user",
           content: message
         }
-      ]
+      ],
+      temperature: 0.8,
+      max_tokens: 200
     });
 
-    thinkingMessage.textContent =
-      reply.choices[0].message.content;
-
+    aiMessage.textContent = reply.choices[0].message.content;
   } catch (error) {
-    thinkingMessage.textContent = "Error generating response.";
+    aiMessage.textContent = "Error generating response.";
   }
 
   chatBox.scrollTop = chatBox.scrollHeight;
