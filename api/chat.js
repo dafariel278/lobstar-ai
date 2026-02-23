@@ -31,10 +31,23 @@ export default async function handler(req, res) {
       })
     });
 
-    const data = await response.json();
+    const text = await response.text();
 
-    const reply =
-      data.choices?.[0]?.message?.content || "No response.";
+    console.log("RAW RESPONSE:", text);
+
+    let data;
+
+    try {
+      data = JSON.parse(text);
+    } catch {
+      return res.status(500).json({ reply: text });
+    }
+
+    if (!data.choices || !data.choices.length) {
+      return res.status(200).json({ reply: JSON.stringify(data) });
+    }
+
+    const reply = data.choices[0].message.content;
 
     return res.status(200).json({ reply });
 
