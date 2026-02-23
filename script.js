@@ -1,39 +1,54 @@
-const API_KEY = "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";
+const API_KEY = "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";
 
 async function sendMessage() {
   const input = document.getElementById("user-input");
   const chatBox = document.getElementById("chat-box");
-  const userText = input.value;
+  const userText = input.value.trim();
 
   if (!userText) return;
 
   chatBox.innerHTML += `<div class="message user">${userText}</div>`;
   input.value = "";
 
-  const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${API_KEY}`,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      model: "openai/gpt-3.5-turbo",
-      messages: [
-        {
-          role: "system",
-          content: "You are Lobstar AI. You speak like an aristocratic intellectual..."
-        },
-        {
-          role: "user",
-          content: userText
-        }
-      ]
-    })
-  });
+  const systemPrompt = `
+You are Lobstar AI.
+You speak like an aristocratic intellectual with sharp wit.
+Your tone is refined, elegant, and slightly ironic.
+You respond calmly and confidently.
+You use metaphors occasionally about ocean, hierarchy, strategy.
+You never use slang.
+You never over-explain.
+Short to medium responses.
+Precise language.
+Dominant but polite.
+`;
 
-  const data = await response.json();
-  const botReply = data.choices[0].message.content;
+  try {
+    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${API_KEY}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        model: "openai/gpt-3.5-turbo",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userText }
+        ]
+      })
+    });
 
-  chatBox.innerHTML += `<div class="message bot">${botReply}</div>`;
-  chatBox.scrollTop = chatBox.scrollHeight;
+    const data = await response.json();
+
+    const botReply =
+      data.choices?.[0]?.message?.content ||
+      "The sea is quiet... something went wrong.";
+
+    chatBox.innerHTML += `<div class="message bot">${botReply}</div>`;
+    chatBox.scrollTop = chatBox.scrollHeight;
+
+  } catch (error) {
+    chatBox.innerHTML += `<div class="message bot">Even the ocean encounters turbulence.</div>`;
+  }
 }
