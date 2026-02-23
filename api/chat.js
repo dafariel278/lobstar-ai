@@ -11,7 +11,7 @@ export default async function handler(req, res) {
     const { message } = req.body;
 
     const response = await fetch(
-      "https://router.huggingface.co/hf-inference/models/google/flan-t5-large",
+      "https://router.huggingface.co/hf-inference/models/mistralai/Mistral-7B-Instruct-v0.2",
       {
         method: "POST",
         headers: {
@@ -19,20 +19,26 @@ export default async function handler(req, res) {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          inputs: message,
+          inputs: `<s>[INST] ${message} [/INST]`,
           options: { wait_for_model: true }
         })
       }
     );
 
-    const result = await response.json();
+    const text = await response.text();
+
+    // Coba parse JSON dengan aman
+    let result;
+    try {
+      result = JSON.parse(text);
+    } catch {
+      return res.status(500).json({ reply: text });
+    }
 
     let reply = "No response.";
 
     if (Array.isArray(result) && result[0]?.generated_text) {
       reply = result[0].generated_text;
-    } else if (result.generated_text) {
-      reply = result.generated_text;
     } else if (result.error) {
       reply = result.error;
     }
