@@ -1,54 +1,38 @@
-const API_KEY = "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";
-
-async function sendMessage() {
+function sendMessage() {
   const input = document.getElementById("user-input");
   const chatBox = document.getElementById("chat-box");
   const userText = input.value.trim();
 
-  if (!userText) return;
+  if (userText === "") return;
 
-  chatBox.innerHTML += `<div class="message user">${userText}</div>`;
+  // Add user message
+  const userMessage = document.createElement("div");
+  userMessage.className = "message user";
+  userMessage.textContent = userText;
+  chatBox.appendChild(userMessage);
+
+  // Generate AI response
+  const aiMessage = document.createElement("div");
+  aiMessage.className = "message ai";
+  aiMessage.textContent = generateLobstarResponse(userText);
+  chatBox.appendChild(aiMessage);
+
   input.value = "";
+  chatBox.scrollTop = chatBox.scrollHeight;
+}
 
-  const systemPrompt = `
-You are Lobstar AI.
-You speak like an aristocratic intellectual with sharp wit.
-Your tone is refined, elegant, and slightly ironic.
-You respond calmly and confidently.
-You use metaphors occasionally about ocean, hierarchy, strategy.
-You never use slang.
-You never over-explain.
-Short to medium responses.
-Precise language.
-Dominant but polite.
-`;
+function generateLobstarResponse(input) {
+  const responses = [
+    "How quaint.",
+    "You ask boldly for someone so unprepared.",
+    "Ambition suits you. Intelligence might follow.",
+    "Ah. A predictable curiosity.",
+    "Interesting. Continue — I am mildly entertained.",
+    "Power is not given. It is taken.",
+    "You seek answers. I offer perspective.",
+    "Luxury is a mindset, not a wallet.",
+    "Ask better questions."
+  ];
 
-  try {
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${API_KEY}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        model: "openai/gpt-3.5-turbo",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userText }
-        ]
-      })
-    });
-
-    const data = await response.json();
-
-    const botReply =
-      data.choices?.[0]?.message?.content ||
-      "The sea is quiet... something went wrong.";
-
-    chatBox.innerHTML += `<div class="message bot">${botReply}</div>`;
-    chatBox.scrollTop = chatBox.scrollHeight;
-
-  } catch (error) {
-    chatBox.innerHTML += `<div class="message bot">Even the ocean encounters turbulence.</div>`;
-  }
+  return responses[Math.floor(Math.random() * responses.length)];
 }
