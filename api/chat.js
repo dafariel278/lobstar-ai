@@ -19,17 +19,25 @@ export default async function handler(req, res) {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          inputs: message
+          inputs: message,
+          options: { wait_for_model: true }
         })
       }
     );
 
     const result = await response.json();
 
+    console.log("HF RESULT:", result);
+
     let reply = "No response.";
 
+    // HANDLE MULTIPLE POSSIBLE FORMATS
     if (Array.isArray(result) && result[0]?.generated_text) {
       reply = result[0].generated_text;
+    } else if (result.generated_text) {
+      reply = result.generated_text;
+    } else if (result.error) {
+      reply = result.error;
     }
 
     return res.status(200).json({ reply });
