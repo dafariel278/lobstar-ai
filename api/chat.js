@@ -4,44 +4,37 @@ export default async function handler(req, res) {
   }
 
   try {
-    if (!process.env.HF_TOKEN) {
-      return res.status(500).json({ reply: "HF token not found." });
+    if (!process.env.OPENROUTER_API_KEY) {
+      return res.status(500).json({ reply: "API key not found." });
     }
 
     const { message } = req.body;
 
-    const response = await fetch(
-      "https://router.huggingface.co/hf-inference/models/mistralai/Mistral-7B-Instruct-v0.2",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${process.env.HF_TOKEN}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          inputs: `<s>[INST] ${message} [/INST]`,
-          options: { wait_for_model: true }
-        })
-      }
-    );
+    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        model: "mistralai/mistral-7b-instruct:free",
+        messages: [
+          {
+            role: "system",
+            content: "You are Lobstar AI. Respond in English. Witty, aristocratic, confident."
+          },
+          {
+            role: "user",
+            content: message
+          }
+        ]
+      })
+    });
 
-    const text = await response.text();
+    const data = await response.json();
 
-    // Coba parse JSON dengan aman
-    let result;
-    try {
-      result = JSON.parse(text);
-    } catch {
-      return res.status(500).json({ reply: text });
-    }
-
-    let reply = "No response.";
-
-    if (Array.isArray(result) && result[0]?.generated_text) {
-      reply = result[0].generated_text;
-    } else if (result.error) {
-      reply = result.error;
-    }
+    const reply =
+      data.choices?.[0]?.message?.content || "No response.";
 
     return res.status(200).json({ reply });
 
