@@ -4,32 +4,28 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Cek API key
-    if (!process.env.OPENROUTER_API_KEY) {
-      return res.status(500).json({ reply: "API key not found." });
+    const ACCOUNT_ID = process.env.CF_ACCOUNT_ID;
+    const API_TOKEN = process.env.CF_API_TOKEN;
+
+    if (!ACCOUNT_ID || !API_TOKEN) {
+      return res.status(500).json({ reply: "Missing API credentials." });
     }
 
     const { message } = req.body;
 
-    if (!message) {
-      return res.status(400).json({ reply: "No message provided." });
-    }
-
     const response = await fetch(
-      "https://openrouter.ai/api/v1/chat/completions",
+      `https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/ai/run/@cf/meta/llama-3-8b-instruct`,
       {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
+          "Authorization": `Bearer ${API_TOKEN}`,
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          model: "openchat/openchat-3.5-0106",
           messages: [
             {
               role: "system",
-              content:
-                "You are Lobstar AI. Respond in English only. Be witty, aristocratic, confident, and sharp. No emojis."
+              content: "You are Lobstar AI. Respond in English clearly and accurately."
             },
             {
               role: "user",
@@ -40,27 +36,17 @@ export default async function handler(req, res) {
       }
     );
 
-    const text = await response.text();
+    const data = await response.json();
 
-    console.log("RAW RESPONSE:", text);
-
-    let data;
-
-    try {
-      data = JSON.parse(text);
-    } catch {
-      return res.status(500).json({ reply: text });
+    if (!data.success) {
+      return res.status(500).json({ reply: "AI error." });
     }
 
-    if (!data.choices || !data.choices.length) {
-      return res.status(200).json({ reply: JSON.stringify(data) });
-    }
-
-    const reply = data.choices[0].message.content;
-
-    return res.status(200).json({ reply });
+    return res.status(200).json({
+      reply: data.result.response
+    });
 
   } catch (error) {
-    return res.status(500).json({ reply: error.message });
+    return res.status(500).json({ reply: "Server error." });
   }
 }
