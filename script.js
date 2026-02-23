@@ -22,17 +22,25 @@ async function sendMessage() {
   chatBox.scrollTop = chatBox.scrollHeight;
 
   try {
-    const response = await fetch("/api/chat", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ message })
-    });
+  const response = await fetch("/api/chat", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ message })
+  });
 
-    const data = await response.json();
+  if (!response.ok) {
+    const errorText = await response.text();
+    thinkingMessage.textContent = "Server error: " + errorText;
+    return;
+  }
 
-    thinkingMessage.textContent = data.reply || "No response.";
+  const data = await response.json();
+
+  console.log("API Response:", data);
+
+  thinkingMessage.textContent = data.reply || "No response.";
 
   } catch (error) {
     console.error(error);
