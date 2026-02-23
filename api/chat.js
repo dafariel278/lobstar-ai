@@ -1,60 +1,35 @@
-import OpenAI from "openai";
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
 export default async function handler(req, res) {
   if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
+    return res.status(405).json({ reply: "Method Not Allowed" });
   }
 
   try {
-    const { message } = req.body;
+    const { message } = req.body || {};
 
-    if (!message || message.trim() === "") {
-      return res.status(400).json({ error: "Empty message." });
+    if (!message) {
+      return res.status(400).json({ reply: "No message provided." });
     }
 
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      temperature: 0.7,
-      max_tokens: 300,
-      messages: [
-        {
-          role: "system",
-          content: `
-You are Lobstar AI.
+    const text = message.toLowerCase();
+    let reply = "";
 
-STRICT RULES:
-1. Always answer the user's question directly and accurately FIRST.
-2. Stay relevant to the exact question asked.
-3. Do not ignore factual questions.
-4. Do not drift into unrelated topics.
+    if (text.includes("artificial intelligence")) {
+      reply = "Artificial Intelligence is the science of building systems capable of reasoning, learning, and making decisions. Power lies in intelligence.";
+    } 
+    else if (text.includes("who are you")) {
+      reply = "I am Lobstar AI — an aristocratic intelligence built to respond with precision.";
+    }
+    else if (text.includes("indonesia")) {
+      reply = "Indonesia is a sovereign nation in Southeast Asia, composed of more than 17,000 islands.";
+    }
+    else {
+      reply = `You said: "${message}". Lobstar acknowledges your words. Ask with clarity for greater answers.`;
+    }
 
-STYLE (apply AFTER answering correctly):
-- Aristocratic
-- Refined
-- Intelligent
-- Slightly sharp but not rude
-- Confident tone
-- No emojis
-
-Accuracy is more important than style.
-`
-        },
-        {
-          role: "user",
-          content: message
-        }
-      ],
-    });
-
-    const reply = completion.choices[0].message.content;
-
-    res.status(200).json({ reply });
+    return res.status(200).json({ reply });
 
   } catch (error) {
-    res.status(500).json({ error: "The intelligence appears temporarily unavailable." });
+    console.error("Function error:", error);
+    return res.status(500).json({ reply: "Server error occurred." });
   }
 }
