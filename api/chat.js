@@ -1,36 +1,23 @@
 export default async function handler(req, res) {
   if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
+    return res.status(405).json({ reply: "Method not allowed" });
   }
 
   try {
-    const ACCOUNT_ID = process.env.CF_ACCOUNT_ID;
-    const API_TOKEN = process.env.CF_API_TOKEN;
-
-    if (!ACCOUNT_ID || !API_TOKEN) {
-      return res.status(500).json({ reply: "Missing API credentials." });
-    }
-
     const { message } = req.body;
 
     const response = await fetch(
-      `https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/ai/run/@cf/meta/llama-3-8b-instruct`,
+      `https://api.cloudflare.com/client/v4/accounts/${process.env.CF_ACCOUNT_ID}/ai/run/@cf/meta/llama-3-8b-instruct`,
       {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${API_TOKEN}`,
+          "Authorization": `Bearer ${process.env.CF_API_TOKEN}`,
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
           messages: [
-            {
-              role: "system",
-              content: "You are Lobstar AI. Respond in English clearly and accurately."
-            },
-            {
-              role: "user",
-              content: message
-            }
+            { role: "system", content: "Answer clearly and simply in English." },
+            { role: "user", content: message }
           ]
         })
       }
@@ -38,12 +25,8 @@ export default async function handler(req, res) {
 
     const data = await response.json();
 
-    if (!data.success) {
-      return res.status(500).json({ reply: "AI error." });
-    }
-
     return res.status(200).json({
-      reply: data.result.response
+      reply: data.result?.response || "AI error."
     });
 
   } catch (error) {
